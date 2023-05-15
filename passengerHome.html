@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Passenger Home</title>
+    <meta charset="utf-8">
+    <meta name="description" content="Best vehicle app for college students">
+    <meta name="keywords" content="ReqRide,reqride,vehicle pool,student,request a ride">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+
+    
+    <?php
+        include 'connect.php';
+        session_start();
+        if(!isset($_SESSION['userid'])){
+            header("Location:index.html");
+        }
+    ?>
+    <style>
+        .border {
+            box-sizing: border-box;
+          }
+        
+        body {
+            position: relative;
+            z-index: 0;
+        }
+        
+        .navbar-nav .nav-item.active .nav-link,
+        .navbar-nav .nav-item:hover .nav-link {
+            color: red;
+            font-weight: bold;
+        }
+        
+        .btn:hover[type=menu] {
+            color: red;
+            font-weight: bold;
+        }
+        
+        .form-popup {
+            display: none;
+            max-width: 100%;
+            position: relative;
+            z-index: 9;
+        }
+        
+        .form-container {
+            opacity: 1;
+        }
+        
+        .pre-scrollable::-webkit-scrollbar {
+            -webkit-appearance: none;
+            width: 3px;
+            height: 3px;
+        }    
+        .pre-scrollable::-webkit-scrollbar-thumb {
+            border-radius: 2px;
+            background-color: lightgray;
+            -webkit-box-shadow: 0 0 1px rgba(255,255,255,.75);        
+        }
+        .pre-scrollable::-webkit-scrollbar-thumb:horizontal {
+            border-radius: 2px;
+            background-color: lightgray;
+            -webkit-box-shadow: 0 0 1px rgba(255,255,255,.75);        
+        }
+		
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+        }
+    </style>
+    
+	
+	<?php
+			$res = $db->query("select * from ride_history inner join rider on rider.rider_id=ride_history.rider_id where ride_history.ride_id = (select max(ride_id) from ride_history where (passenger_id={$_SESSION['userid']} and 'Accepted' = (select passenger_status from passenger where passenger_id={$_SESSION['userid']})))") or die($db->error);
+			 if($res->num_rows>0){
+                            $row1=$res->fetch_assoc();
+                                $PID=$row1['passenger_id'];
+                                $RID=$row1['rider_id'];
+								$bno=$row1['bike_number'];
+								$bn=$row1['bike_name'];
+								$fare=$row1['ride_fare'];
+                                $result2=$db->query("select * from user_name where user_name_id=$PID union select * from user_name where user_name_id=$RID") or die($db->error);
+                                if($result2->num_rows>0){
+                                    while($row2=$result2->fetch_assoc()){
+                                        if($PID==$row2['user_name_id']){
+                                            $pname=$row2['first_name']." ".$row2['last_name'];
+                                        }
+                                        else{ 
+                                            $rname=$row2['first_name']." ".$row2['last_name'];
+                                        }
+                                    }
+								}
+                                $s_loc_id=$row1['source_location_id'];
+                                $d_loc_id=$row1['destination_location_id'];
+        
+                                $result3=$db->query("select * from locality where user_locality_id=$s_loc_id union select * from locality where user_locality_id=$d_loc_id") or die($db->error);
+                                if($result3->num_rows>0){
+                                    while($row3=$result3->fetch_assoc()){
+                                        if($s_loc_id==$row3['user_locality_id']){
+                                            $sloc=$row3['locality_name'];
+                                        }
+                                        else{ 
+                                            $dloc=$row3['locality_name'];
+                                        }
+                                    }
+								}
+				}
+								
+		?>
+	
+	
+    <script>
+        $(document).ready(function(){
+             $("#submitRequest").attr('disabled',true)
+           
+            $("#curLocationValue label").click(function(){
+              $("#curLocation").html($(this).text());
+               $("#curLocVal").val($(this).text());
+               
+               if($("#curLocVal").val().match("KIT COLLEGE")){
+                   
+                   $("#destLocation").attr('disabled',false).html("Destination Location");
+                   
+                   if( $("#destLocVal").val() == $("#curLocVal").val()){
+                        $("#sameDrpMsg").html("<p class='text-danger'>Please select 2 diferent localities.</p>");
+                        $("#submitRequest").attr("disabled","true")
+                    }
+                    else{
+                        $("#sameDrpMsg").html(" ")
+                        $("#submitRequest").attr('disabled',false)
+                        
+                    }
+               
+               }
+               
+               else{
+                   $("#destLocVal").val("KIT COLLEGE");
+                   $("#destLocation").html("KIT COLLEGE");
+                   $("#destLocation").attr('disabled',true);
+                   
+                   if( $("#destLocVal").val() == $("#curLocVal").val()){
+                        $("#sameDrpMsg").html("<p class='text-danger'>Please select 2 diferent localities.</p>");
+                        $("#submitRequest").attr("disabled","true")
+                    }
+                    else{
+                        $("#sameDrpMsg").html(" ")
+                        $("#submitRequest").attr('disabled',false)
+                    }
+                   
+               }
+           });
+            
+            $("#destLocationValue label").click(function(){
+              $("#destLocation").html($(this).text());
+                $("#destLocVal").val($(this).text());
+                if( $("#destLocVal").val() == $("#curLocVal").val()){
+                      $("#sameDrpMsg").html("<p class='text-danger'>Please select 2 diferent localities.</p>")
+                    $("#submitRequest").attr('disabled',true)
+                  }
+                else{
+                    $("#sameDrpMsg").html(" ")
+                    $("#submitRequest").attr('disabled',false)
+                }   
+           });
+			
+			$("#logout").click(function(){
+				if(window.confirm("Are you sure ?")==true){
+					$(this).attr("href","logout.php")
+                    
+                }
+                else{
+                    $(this).attr("href","#")
+                }
+			})
+			
+			if($("#numrows").val()==0){
+					$("#infoForm").attr("hidden",true)
+				}
+			else{
+				$("#infoForm").attr("hidden",false)
+			}
+        });
+    </script>
+    
+</head>
+    
+<body data-spy="scroll" data-target=".navbar" data-offset="50">
+<div class="container">    
+    <?php 
+                    $result=$db->query("select first_name, last_name from user_name where user_name_id = {$_SESSION['userid']}") or die ($db->error);                    
+                    $row=$result->fetch_assoc();
+                ?>
+        <nav class="navbar navbar-expand-md col-md-12 col-sm-12" style="margin-bottom:4%;">
+            <a class="navbar-brand " href="passengerHome.html"><i>Dashboard</i></a>
+            <button class="navbar-toggler navbar-toggler-right custom-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+                        <span class="dropdown-toggle " style="color:red"></span>
+                    </button>
+            <div class="collapse navbar-collapse" id="collapsibleNavbar">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link text-info" href="rideHistory.html">Ride History</a></li>
+                    <?php 
+                        $result=$db->query("select first_name, last_name from user_name where user_name_id = {$_SESSION['userid']}") or die ($db->error);                    
+                        $row=$result->fetch_assoc();
+                    ?>
+                    <li class="nav-item dropdown text-primary" style="float: right;"><a class="nav-link text-info" href="profile.html"><?php echo $row['first_name']." ".$row['last_name']; ?></a></li>
+                    <li class="nav-item"><a type="menu" class="nav-link text-info" href="" id="logout">Logout</a></li>
+                </ul>
+            </div>        
+        </nav>
+	
+    <div class="my-5" id="infoForm">
+        <center><form class="form col-md-10 col-sm-12 bg-light border shadow">
+            <h1 class="form-header header form-text text-info">Current Ride</h1>
+			<input type="hidden" id="numrows" value="<?php echo $res->num_rows; ?>">
+			<hr>
+			<div class="form-inline  col-md-12 p-3">
+				<div class="form-inline col-md-5">
+					<label for="passenger" class="form-text text-bold mr-1">Passenger:&nbsp;</label>
+					<input type="text" id="passenger" class="form-text form-control font-weight-bold" style="border:none;" value="<?php echo $pname; ?>" readonly>
+				</div>
+				<div class="form-inline col-md-6">
+					<label for="rider" class="form-text mr-1">Rider:&nbsp;</label>
+					<input type="text" id="rider" class="form-text form-control font-weight-bold" style="border:none;" value="<?php echo $rname; ?>" readonly>
+				</div>
+			</div>
+			<div class="form-inline col-md-12 p-3">
+				<div class="form-inline col-md-5">
+					<label for="destloc" class="form-text mr-1">From:&nbsp;</label>
+					<input type="text" id="srcloc" class="form-text form-control font-weight-bold" style="border:none;" value="<?php echo $sloc; ?>" readonly>
+				</div>
+				<label class="col-md-1 form-inline">To</label>
+				<div class="form-inline col-md-5">
+					<input type="text" id="destloc" class="form-text form-control font-weight-bold" style="border:none;" value="<?php echo $dloc; ?>" readonly>
+				</div>
+			</div>
+			<div class="form-inline p-3">
+				<div class="form-inline col-md-5">
+					<label for="name" class="form-text mr-1">Bike:&nbsp;</label>
+					<input type="text" id="name" class="form-text form-control font-weight-bold" style="border:none;" value="<?php echo $bn; ?>" readonly>
+				</div>
+				<div class="form-inline col-md-6">
+					<input type="text" id="num" class="form-text form-control font-weight-bold" style="border:none;" value="<?php echo $bno; ?>" readonly>
+				</div>
+			</div>
+			<div class="form-inline p-3">
+				<div class="form-inline col-md-5">
+					<label for="fare" class="form-text mr-1">Fare:&nbsp;</label>
+					<input type="text" id="fare " class="form-text form-control font-weight-bold" style="border:none;" value="<?php echo $fare; ?>" readonly>
+				</div>
+			</div>
+        </form></center>
+    </div>
+    <div class="m-auto" id="request">
+        <center><form action="request.php" method="POST" class="form bg-light shadow col-md-8 col-sm-10 m-auto" >
+            <h1 class="text-info text-center">Request a Ride</h1>
+            <hr>
+            <div class="form-group">
+                <div class="dropdown">
+                    <button type="select" class="btn btn-info dropdown-toggle m-auto" id="curLocation" name="curLocation" data-toggle="dropdown">Current Location</button>
+                    <div class="dropdown-menu pre-scrollable" id="curLocationValue" name="curLocationValue">
+                        <?php
+                            $sql="SELECT * FROM locality order by locality_name";
+                            $result = $db->query($sql) or die($db->error);
+                            if($result->num_rows>0){
+                                while($row=$result->fetch_assoc()){                           
+                                ?>
+                                    <label class="dropdown-item"><?php echo $row['locality_name']; ?></label>
+				                <?php 
+                                }
+                            }
+                        ?>
+                    </div>
+                </div>
+                <input type="hidden" id="curLocVal" name="curLocVal">
+                
+                <label class="form-text m-auto mt-2 ">To</label>
+        
+                <input type="hidden" id="destLocVal" name="destLocVal">
+                <div class="dropdown" area-describedby="sameDrpMsg">
+                    <button type="select" class="btn btn-info dropdown-toggle m-auto" id="destLocation" name="destLocation" data-toggle="dropdown">Destination Location</button>
+                    <div class="dropdown-menu pre-scrollable" id="destLocationValue" name="destLocationValue">
+                        <?php
+                            $sql="SELECT * FROM locality order by locality_name";
+                            $result = $db->query($sql) or die($db->error);
+                            if($result->num_rows>0){
+                                while($row=$result->fetch_assoc()){                      
+                                ?>
+                                    <label class="dropdown-item"><?php echo $row['locality_name']; ?></label>
+				                <?php 
+                                }
+                            }
+                        ?>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="form-group">
+                <span class="form-text" id="sameDrpMsg"></span>
+            </div>
+            <input type="hidden" name="status" value="Requested">
+            <hr>
+            <div class="form-group m-auto">
+                <button type="submit" id="submitRequest" name="submitRequest" class="btn btn-success form-text m-auto" value="Request a ride">Request</button>
+            </div>
+        </form></center>
+    </div>
+    
+    
+    <div class="bg-success" id="request">
+    
+    </div>
+    
+    
+    <div class="bg-primary" id="request">
+    
+    </div>
+    
+</div>
+   
+    
+    
+</body>
+</html>

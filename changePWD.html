@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="description" content="Best vehicle app for college students">
+    <meta name="keywords" content="ReqRide,reqride,vehicle pool,student,request a ride">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+
+    <?php
+        include 'connect.php';
+
+        session_start();
+        if(!isset($_SESSION['userid'])){
+            header("Location:index.html");
+        }
+        
+    ?>
+    <script>
+        
+    <?php
+            $result=$db->query("select user_password from login where user_id={$_SESSION['userid']}") or die($db->error);
+            $row=$result->fetch_assoc();
+            $cur_pass=$row['user_password'];
+        ?>
+        
+        
+        $(document).ready(function(){
+           $("#curPWD").focus()
+            $("#newPWD,#confirmPWD,#submitPWD").attr('disabled',true);
+            $("#curPWD,#newPWD").keyup(function(){
+                var pass = /^(?=(.*[a-z]){1,})(?=(.*[\d]){1,})(?=(.*[\W]){1,})(?!.*\s).{8,15}$/
+
+                if (pass.test($(this).val())){
+                    $(this).css("border","2px solid green");
+                    $("#newPWD,#confirmPWD").attr("disabled",false);
+                }
+                else {
+                    $(this).css("border","2px solid red");
+                    $("#submitPWD").attr("disabled",true);
+                }
+            });
+            
+            $("#confirmPWD").keyup(function(){
+                if($(this).val() == $("#newPWD").val())
+              {
+                  $(this).css("border","2px solid green");
+                  $("#submitPWD").attr("disabled",false);
+              }
+              else
+              {
+                   $(this).css("border","2px solid red");
+                  $("#submitPWD").attr("disabled",true);
+              }          
+            });
+			
+			$("#logout").click(function(){
+				if(window.confirm("Are you sure ?")==true){
+					$(this).attr("href","logout.php")
+               	}
+               	else{
+                   	$(this).attr("href","#")
+               	}
+			})
+            
+        });
+    </script>
+    
+</head>
+    
+<body>
+    <div class="container">
+      <nav class="navbar navbar-expand-md sticky">
+        <?php
+            $r = $db->query("select user_role from user where user_id={$_SESSION['userid']}") or die($db->error);
+            if($r->fetch_assoc()['user_role']=="P"){
+        ?>
+                <a class="navbar-brand" href="passengerHome.html"><i>Dashboard</i></a>
+        <?php
+            }
+            else{
+        ?>
+            <a class="navbar-brand" href="riderHome.html"><i>Dashboard</i></a>
+        <?php
+            }
+        ?>
+        <button class="navbar-toggler navbar-toggler-right custom-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+            <span class="dropdown-toggle " style="color:red"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="collapsibleNavbar">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link text-info" href="rideHistory.html">Ride History</a></li>
+                <?php 
+                    $result=$db->query("select first_name, last_name from user_name where user_name_id = {$_SESSION['userid']}") or die ($db->error);                    
+                    $row=$result->fetch_assoc();
+                ?>
+                <li class="nav-item dropdown text-primary" style="float: right;"><a class="nav-link text-info" href="profile.html"><?php echo $row['first_name']." ".$row['last_name']; ?></a></li>
+                <li class="nav-item"><a type="menu" class="nav-link text-info" href="" id="logout">Logout</a></li>
+            </ul>
+        </div>
+        </nav>  
+    
+        <form class="form border bg-light shadow" action="PWDchange.php" method="POST">
+            <h1 class="form-text text-info text-center">Change Password</h1>
+            <hr>
+            <div class="form-inline col-md-8 col-sm-12 m-auto">
+                <label class="form-text text-muted"><h4>Current Password: </h4></label>
+                <input type="password" class="form-control ml-3" id="curPWD" name="curPWD" placeholder="Current Password">
+            </div>
+            <hr>
+            <div class="form-group">
+                <div class="form-inline col-md-8 col-sm-12 m-auto my-3">
+                    <label class="form-text text-muted"><h4>New password: </h4></label>
+                    <input type="password" class="form-control ml-3" id="newPWD" name="newPWD" placeholder="Current Password">
+                </div>
+                <div class="form-inline col-sm-12 col-md-8 m-auto my-3">
+                    <label class="form-text text-muted"><h4>Confirm password: </h4></label>
+                    <input type="password" class="form-control ml-3" id="confirmPWD" name="confirmPWD" placeholder="Current Password">
+                </div>
+                <hr>
+                <div class="form-inline col-md-8 col-sm-12 m-auto">
+                    <button type="submit" class="btn btn-success form-text mr-2" id="submitPWD">Submit</button>
+                </div>
+            </div>
+        </form>    
+        
+    </div>
+</body>
+</html>

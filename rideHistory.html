@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Request A Ride</title>
+    <meta charset="utf-8">
+    <meta name="description" content="Best vehicle app for college students">
+    <meta name="keywords" content="ReqRide,reqride,vehicle pool,student,request a ride">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+
+    <?php
+        include 'connect.php';
+       session_start();
+        if(!isset($_SESSION['userid'])){
+            header("Location:index.html");
+        }
+    ?>
+    
+    <style>
+        .table-responsive::-webkit-scrollbar {
+            -webkit-appearance: none;
+            width: 5px;
+            height: 5px;
+        }    
+        .table-responsive::-webkit-scrollbar-thumb {
+            border-radius: 2px;
+            background-color: lightgray;
+            -webkit-box-shadow: 0 0 1px rgba(255,255,255,.75);        
+        }
+        .table-responsive::-webkit-scrollbar-thumb:horizontal {
+            border-radius: 2px;
+            background-color: lightgray;
+            -webkit-box-shadow: 0 0 1px rgba(255,255,255,.75);        
+        }
+    </style>
+    
+    <script>
+		$(document).ready(function(){
+    		$("#logout").click(function(){
+				if(window.confirm("Are you sure ?")==true){
+					$(this).attr("href","logout.php")
+               	}
+               	else{
+                   	$(this).attr("href","#")
+               	}
+			})
+		})
+    </script>
+</head>
+    
+<body>
+    <div class="container">
+    <nav class="navbar navbar-expand-md sticky">
+        <?php
+            $r = $db->query("select user_role from user where user_id={$_SESSION['userid']}") or die($db->error);
+            if($r->fetch_assoc()['user_role']=="P"){
+        ?>
+            <a class="navbar-brand" href="passengerHome.html"><i>Dashboard</i></a>
+        <?php
+            }
+            else{
+        ?>
+            <a class="navbar-brand" href="riderHome.html"><i>Dashboard</i></a>
+        <?php
+            }
+        ?>
+        <button class="navbar-toggler navbar-toggler-right custom-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+            <span class="dropdown-toggle " style="color:red"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="collapsibleNavbar">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link text-info" href="rideHistory.html">Ride History</a></li>
+                <?php 
+                    $result=$db->query("select first_name, last_name from user_name where user_name_id = {$_SESSION['userid']}") or die ($db->error);                    
+                    $row=$result->fetch_assoc();
+                ?>
+                <li class="nav-item dropdown text-primary" style="float: right;"><a class="nav-link text-info" href="profile.html"><?php echo $row['first_name']." ".$row['last_name']; ?></a></li>
+                <li class="nav-item"><a type="menu" class="nav-link text-info" href="" id="logout">Logout</a></li>
+            </ul>
+        </div>    
+    </nav>
+        
+        <div class="col-md-12 col-sm-12 table-responsive">
+            <h1 class="text-info mb-3"><b>Ride History</b></h1>
+            <table class="table bg-light">
+                <thead class="thead-light text-light">
+                    <tr>
+                        <th>Rider</th>
+                        <th>Passenger</th>
+                        <th>Source Location</th>
+                        <th>Destination Location</th>
+                        <th>Time</th>
+                        <th>Fare</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                        $result1=$db->query("select * from ride_history where rider_id={$_SESSION['userid']} or passenger_id={$_SESSION['userid']}") or die($db->error);
+                        if($result1->num_rows>0){
+                            while($row1=$result1->fetch_assoc()){
+                                $PID=$row1['passenger_id'];
+                                $RID=$row1['rider_id'];
+                                $result2=$db->query("select * from user_name where user_name_id=$PID union select * from user_name where user_name_id=$RID") or die($db->error);
+                                if($result2->num_rows>0){
+                                    while($row2=$result2->fetch_assoc()){
+                                        if($PID==$row2['user_name_id']){
+                                            $pname=$row2['first_name']." ".$row2['last_name'];
+                                        }
+                                        else{ 
+                                            $rname=$row2['first_name']." ".$row2['last_name'];
+                                        }
+                                    }
+
+                                $s_loc_id=$row1['source_location_id'];
+                                $d_loc_id=$row1['destination_location_id'];
+        
+                                $result3=$db->query("select * from locality where user_locality_id=$s_loc_id union select * from locality where user_locality_id=$d_loc_id") or die($db->error);
+                                if($result3->num_rows>0){
+                                    while($row3=$result3->fetch_assoc()){
+                                        if($s_loc_id==$row3['user_locality_id']){
+                                            $sloc=$row3['locality_name'];
+                                        }
+                                        else{ 
+                                            $dloc=$row3['locality_name'];
+                                        }
+                                    }
+                    ?>  
+                                <tr>
+                                    <td><?php echo $rname; ?></td>
+                                    <td><?php echo $pname; ?></td>
+                                    <td><?php echo $sloc; ?></td>
+                                    <td><?php echo $dloc; ?></td>
+                                    <td><?php echo $row1['ride_timestamp']; ?></td>
+                                    <td><?php echo $row1['ride_fare']; ?></td>
+                                </tr>
+                    <?php
+                                }   
+                                }
+                            }
+                        }
+                    ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

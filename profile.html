@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+
+<html>
+    
+<head>
+    <title>Request A Ride</title>
+    <meta charset="utf-8">
+    <meta name="description" content="Best vehicle app for college students">
+    <meta name="keywords" content="ReqRide,reqride,vehicle pool,student,request a ride">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+
+    <?php
+        include 'connect.php';
+        session_start();
+        if(!isset($_SESSION['userid'])){
+            header("Location:index.html");
+        }
+
+
+        $result=$db->query("select * from user
+            inner join locality on user.user_locality_id = locality.user_locality_id 
+            inner join user_dept on user.user_dept_id = user_dept.user_dept_id 
+            inner join user_year on user.user_year_id = user_year.user_year_id 
+            inner join user_name on user.user_id = user_name.user_name_id
+            inner join user_mobile on user.user_id=user_mobile.user_mobile_id where user.user_id = '{$_SESSION['userid']}'") or die($db->error);
+            
+        $row = $result->fetch_assoc();
+
+        $fn=$row['first_name'];
+        $mn=$row['middle_name'];
+        $ln=$row['last_name'];
+        $m1=$row['user_mobile_1'];
+        $m2=$row['user_mobile_2'];
+        $loc = $row['locality_name'];
+        $dept = $row['user_dept'];
+        $y = $row['user_year'];
+        $dp= $row['Img_Path'];
+        $role = $row['user_role'];
+
+        if($row['user_role']=="R"){
+            $result1=$db->query("select * from rider inner join license on rider.rider_id=license.rider_id where rider.rider_id={$_SESSION['userid']}") or die($db->error);
+            $row1=$result1->fetch_assoc();
+            $bno=$row1['bike_number'];
+            $bn=$row1['bike_name'];
+            $lno=$row1['license_number'];
+			$lic = $row1['Img_Path'];
+        }
+    ?>
+    
+    <style>
+        .border {
+            box-sizing: border-box;
+          }
+        .navbar-nav .nav-item.active .nav-link,
+        .navbar-nav .nav-item:hover .nav-link {
+            color: red;
+            font-weight: bold;
+        }
+        
+        .btn:hover[type=menu] {
+            color: red;
+            font-weight: bold;
+        }
+		
+		.img{
+			border-radius: 4px;
+			border-color: black;
+   			box-shadow: 1px 1px 3px 3px rgba(127, 127, 127, 0.15);
+			pointer-events: none;
+		}
+		
+		.img1{
+			border-radius: 4px;
+			border-color: black;
+   			box-shadow: 1px 1px 3px 3px rgba(127, 127, 127, 0.15);
+			pointer-events: none;
+		}
+		
+        .pre-scrollable::-webkit-scrollbar {
+            -webkit-appearance: none;
+            width: 5px;
+            height: 5px;
+        }
+        .pre-scrollable::-webkit-scrollbar-thumb {
+            border-radius: 3px;
+            background-color: lightgray;
+            -webkit-box-shadow: 0 0 3px rgba(255,255,255,.75);        
+        }
+        .pre-scrollable::-webkit-scrollbar-thumb:horizontal {
+            border-radius: 3px;
+            background-color: lightgray;
+            -webkit-box-shadow: 0 0 3px rgba(255,255,255,.75);        
+        }
+		
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+        }
+    </style>
+    
+    <script>
+        $(document).ready(function(){
+			$("#dpimg").attr("src","<?php echo $dp; ?>");
+            
+            $("#editProfile").click(function(){
+                $("#fname,#lname,#mname,#mob1,#mob2,#bikeNumber,#bikeModel,#licenceNumber").attr('readonly',false);
+                $("#fname,#mname,#lname,#mob1,#mob2,#bikeNumber,#bikeModel,#licenceNumber").css('border','');
+                
+                $("#localityDropdown,#yearDropdown,#departmentDropdown,#licenceNumber-help,#bikeNumber-help,#submitProfile,#cancelProfile,#updateHeader,#editdp").attr('hidden',false);
+                $("#localityDropdownHide,#yearDropdownHide,#departmentDropdownHide,#editProfile").attr('hidden',true);
+                
+                $("#lDropdown").val("<?php echo $loc; ?>");
+                $("#yDropdown").val("<?php echo $y; ?>");
+                $("#deptDropdown").val("<?php echo $dept; ?>");
+            });
+            
+           $("#cancelProfile").click(function(){
+               $("#fname,#lname,#mname,#mob1,#mob2,#bikeNumber,#bikeModel,#licenceNumber").attr('readonly',true);
+                $("#fname,#mname,#lname,#mob1,#mob2,#bikeNumber,#bikeModel,#licenceNumber").css('border','none');
+                
+                $("#localityDropdown,#yearDropdown,#departmentDropdown,#licenceNumber-help,#bikeNumber-help,#updateHeader,#submitProfile,#cancelProfile,#editdp").attr('hidden',true);
+                $("#localityDropdownHide,#yearDropdownHide,#departmentDropdownHide,#editProfile").attr('hidden',false);
+
+            });
+            
+            $("#fname,#lname,#mname").keyup(function(){
+				if ( $(this).val().match('^[a-zA-Z]{2,20}$') ) {
+					$(this).css("border","2px solid green");
+				}
+				else {
+					$(this).css("border","2px solid red");
+				}
+		   });
+            
+            $("#mob1").keyup(function(){
+               if ( $(this).val().match('^[0-9]{10}$') ) {
+					$(this).css("border","2px solid green");
+				}
+				else {
+					$(this).css("border","2px solid red");
+				} 
+            });
+            
+		   $("#deptValue label").click(function(){
+               $("#departmentDropdown").html($(this).text())
+               $("#deptDropdown").val($(this).text())
+			   
+           });
+
+		   $("#yearValue label").click(function(){
+               $("#yearDropdown").html($(this).text())
+			   $("#yDropdown").val($(this).text())
+           });
+
+		   $("#localityValue label").click(function(){
+               $("#localityDropdown").html($(this).text())
+               $("#lDropdown").val($(this).text())
+			   
+           });
+			
+			$("#logout").click(function(){
+				if(window.confirm("Are you sure ?")==true){
+					$(this).attr("href","logout.php")
+               	}
+               	else{
+                   	$(this).attr("href","#")
+               	}
+			})
+			
+			function readURLdp(input) {
+    			if (input.files && input.files[0]) {
+        		var reader = new FileReader();
+					
+					reader.onload = function (e) {
+						$("#dpimg").attr('src', e.target.result);
+        			}
+					reader.readAsDataURL(input.files[0]);
+    			}
+			}
+
+			$("#editdp").change(function(){
+    			readURLdp(this);
+				$("#dpimg").attr("hidden",false)
+			});
+			
+        });
+        
+    </script>
+</head>
+
+<body>
+    <div class="container">    
+        <nav class="navbar navbar-expand-md sticky">
+        <?php
+            $r = $db->query("select user_role from user where user_id={$_SESSION['userid']}") or die($db->error);
+            if($r->fetch_assoc()['user_role']=="P"){
+        ?>
+                <a class="navbar-brand" href="passengerHome.html"><i>Dashboard</i></a>
+        <?php
+            }
+            else{
+        ?>
+            <a class="navbar-brand" href="riderHome.html"><i>Dashboard</i></a>
+        <?php
+            }
+        ?>
+        <button class="navbar-toggler navbar-toggler-right custom-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+            <span class="dropdown-toggle " style="color:red"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="collapsibleNavbar">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link text-info" href="rideHistory.html">Ride History</a></li>
+                <?php 
+                    $result=$db->query("select first_name, last_name from user_name where user_name_id = {$_SESSION['userid']}") or die ($db->error);                    
+                    $row=$result->fetch_assoc();
+                ?>
+                <li class="nav-item dropdown text-primary" style="float: right;"><a class="nav-link text-info" href="profile.html"><?php echo $row['first_name']." ".$row['last_name']; ?></a></li>
+                <li class="nav-item"><a type="menu" class="nav-link text-info" href="" id="logout">Logout</a></li>
+            </ul>
+        </div>
+        </nav>
+    </div>
+    <div class="container">
+        <center><form class="form form-center border bg-light" method="post"action="updateProfile.php" enctype="multipart/form-data">
+          
+            <h1 class="text-center text-info"><span id="updateHeader" hidden>Update </span>Profile</h1>
+            <hr>
+            <div class="form-inline col-md-12 col-sm-12">
+                <label class="form-text col-md-4 col-sm-6 text-justify">User ID:</label>
+                <input type="numbar" class="form-text form-control col-md-4 col-sm-6 m-2" style="border:none;" value="<?php echo $_SESSION['userid']; ?>" readonly>
+				<img src="" class="img-responsive img col-md-2 col-sm-12 border m-auto p-2" width="10%" height="230px" id="dpimg" name="dpimg">
+            </div> 
+			<input type="file" class="my-2" id="editdp" name="editdp" hidden>
+            <div class="form-inline col-md-12 csol-sm-12">
+                <label class="form-text col-md-4 col-sm-6 text-justify" style="float:left;" >Name:</label>
+                <input type="text" class="form-text form-control mr-1 my-1" id="fname" name="fname" style="border:none;" value="<?php echo $fn;?>" placeholder="First Name" readonly>
+                <input type="text" class="form-text form-control mr-1 my-1" id="mname" name="mname" style="border:none;" value="<?php echo $mn;?>" placeholder="Middle Name" readonly>
+                <input type="text" class="form-text form-control my-1" id="lname" name="lname" style="border:none;" value="<?php echo $ln;?>" placeholder="Last Name" readonly>
+            </div>
+            <div class="form-inline col-md-12 col-sm-12">
+                <label class="form-text col-md-4 col-sm-6 text-justify">Mobile Number:</label>
+                <input type="number" class="form-text form-control mx-1 my-1" id="mob1" name="mob1" style="border:none;" value="<?php echo $m1;?>" readonly>
+                <input type="number" class="form-text form-control mx-1 my-1" id="mob2" name="mob2" style="border:none;" value="<?php echo $m2;?>" readonly>
+            </div>
+            <div class="form-inline col-md-12 col-sm-12 my-2">
+                    <label class="form-text col-md-4 col-sm-6 text-justify">Home Locality: </label>
+                    <div class="form-group dropdown">
+                        <button type="submit" class="btn btn-info dropdown-toggle my-1 pull-left" id="localityDropdown" data-toggle="dropdown" hidden><?php echo $loc; ?></button><span class="btn btn-info my-1" id="localityDropdownHide"><?php echo $loc; ?></span>
+                            <div cLass="dropdown-menu col-md-6 col-sm-4 mr-10 my-1 pre-scrollable" id="localityValue" name="localityDropdown">
+                                <?php
+                                    $sql="SELECT * FROM locality order by locality_name";
+                                    $result2 = $db->query($sql) or die($db->error);
+
+                                    if($result2->num_rows>0){
+                                        while($row2=$result2->fetch_assoc()){                      
+                                ?>
+                                            <label class="dropdown-item text"><?php echo $row2['locality_name']."<br>"; ?></label>
+								<?php 
+                                        }
+                                    }
+                                ?>        
+                            </div>
+                        </div>
+                    <input type="hidden" name="lDropdown" id="lDropdown">
+            </div>
+                <div class="col-md-12 col-sm-12 form-inline my-2">
+                    <label class="form-text col-md-4 col-sm-6 text-justify">Year and Department: </label>
+                    <div class="form-inline dropdown col-md-2 col-sm-6 my-1">
+                        <button type="select" class="btn btn-info dropdown-toggle form-text"  id="yearDropdown" data-toggle="dropdown" hidden><?php echo $y; ?></button><span class="btn btn-info my-1" id="yearDropdownHide"><?php echo $y; ?></span>
+                        <div cLass="dropdown-menu" id="yearValue" name="yearDropdown">
+                            <?php
+                                $sql="SELECT * FROM user_year order by user_year_id asc";
+                                $result3 = $db->query($sql) or die($db->error);
+
+                                if($result3->num_rows>0){
+                                    while($row3=$result3->fetch_assoc()){              
+                                    ?>
+                                        <label class="dropdown-item"><?php echo $row3['user_year']."<br>"; ?></label>
+                                    <?php 
+                                    }
+                                }
+                            ?>
+                        </div>
+				        <input type="hidden" name="yDropdown" id="yDropdown">
+                    </div>
+                    <div class="form-inline dropdown col-md-4 col-sm-6 my-1">
+                        <button type="select" class="btn btn-info dropdown-toggle form-text"  id="departmentDropdown" data-toggle="dropdown" hidden><?php echo $dept; ?></button><span class="btn btn-info my-1" id="departmentDropdownHide"><?php echo $dept; ?></span>
+                        <div cLass="dropdown-menu"  id="deptValue" name="departmentDropdown">
+                            <?php
+                                $sql="SELECT user_dept FROM user_dept order by user_dept_id asc";
+                                $result4 = $db->query($sql) or die($db->error);
+
+                                if($result4->num_rows>0){
+                                    while($row4=$result4->fetch_assoc()){
+                                    ?>
+                                        <label class="dropdown-item text" ><?php echo $row4['user_dept']."<br>"; ?></label>
+                                    <?php 
+                                    }
+                                }
+                            ?>                                        
+                        </div>
+				        <input type="hidden" name="deptDropdown" id="deptDropdown">
+                    </div>
+                </div>
+            <?php if($role == "R"){ ?>
+            <div class="col-md-12 col-sm-12 m-auto" id="bikeLicenceInformation"> 
+                <div class="col-md-12 col-sm-12 m-auto">
+                    <div class="form-inline mt-5">
+                        <label class="form-text col-md-4 col-sm-6 text-justify">Vehicle: </label>
+                        
+                        <input type="text" class="form-control mr-1 my-1" style="border: none" name="bikeNumber" id="bikeNumber" aria-describedby="bikeNumber-help" placeholder="Bike Number" value="<?php echo $bno; ?>" readonly>
+                        <input type="text" class="form-control my-1" style="border: none" name="bikeModel" id="bikeModel" placeholder="Bike model name" value="<?php echo $bn; ?>" readonly>
+                    </div>
+                    <small id="bikeNumber-help" class="form-text text-muted text-center" hidden><i><span class="text-info">Note:</span>Bike Number is Mandatory for registration into </i><span class="text-primary" style="font-weight:bold;">ReqRide:-<i>Request-a-Ride.</i></span></small>
+                </div>
+                <br>
+                <div class="form-inline col-md-12 col-sm-12 m-auto">
+                    <label class="form-text col-md-4 col-sm-6 text-justfy">License Number: </label>
+                    <input type="text" class="form-control my-1" style="border: none" name="licenceNumber" id="licenceNumber" aria-describedby="licenceNumber-help" placeholder="Licence Number" value="<?php echo $lno; ?>" readonly>
+                </div>
+                <small id="licenceNumber-help" class="form-text text-muted text-center" hidden><i><span class="text-info">Note:</span>Valid licence number mandatory.</i></small>
+				<div class="m-3">
+					<img class="img-responsive img1 m-auto" src="<?php echo $lic; ?>" width="25%" height="20%" name="licimg">
+				</div>
+            </div>
+            
+            <?php
+            }
+            ?>
+            <hr>
+            <div class="my-2">
+                <a class="btn btn-success text-light m-auto my-2" id="editProfile">Edit Profile</a>
+                <button type="submit" class="btn btn-success mr-2" id="submitProfile" name="submitProfile" hidden>Submit</button>
+                <a  class="btn btn-secondary text-light m-auto my-2" id="editPWD" href="changePWD.html">Change Password</a>
+                <button type="reset" class="btn btn-danger" id="cancelProfile" name="cancelProfile" hidden>Cancel</button>
+            </div>
+        </form></center>
+    </div>
+</body>
+</html>
